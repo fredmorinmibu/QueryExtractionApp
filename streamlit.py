@@ -20,13 +20,13 @@ def main():
         airtable_base_id = os.getenv("AIRTABLE_BASE_ID")
         airtable_table_name = os.getenv("AIRTABLE_TABLE_NAME")    
     
-    print (airtable_api_key)
-    print (airtable_base_id)
-    print (airtable_table_name)
+    # print (airtable_api_key)
+    # print (airtable_base_id)
+    # print (airtable_table_name)
 
-    airtable_api_key = "patHs2G0VbeTXOxvW.4be741a1854bb51641a04a0990f95404b08dafa06441eb5211e35eb59e13fff3"
-    airtable_base_id = "app4IZo9AHBqykAEr"
-    airtable_table_name = "tblMHZA4IP4Ay4AM7"
+    # airtable_api_key = "patHs2G0VbeTXOxvW.4be741a1854bb51641a04a0990f95404b08dafa06441eb5211e35eb59e13fff3"
+    # airtable_base_id = "app4IZo9AHBqykAEr"
+    # airtable_table_name = "tblMHZA4IP4Ay4AM7"
 
     #at = airtable.Airtable(airtable_base_id, airtable_table_name, airtable_api_key)
     at = Table(airtable_api_key, airtable_base_id,  airtable_table_name)
