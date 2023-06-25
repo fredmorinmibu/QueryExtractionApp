@@ -1,0 +1,6 @@
+streamlit
+airtable-python-wrapper
+pandas
+numpy
+python-dotenv
+streamlit-aggrid
