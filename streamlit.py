@@ -9,15 +9,12 @@ from st_aggrid import AgGrid
 
 load_dotenv()
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
 airtable_api_key = os.getenv("AIRTABLE_API_KEY")
 airtable_base_id = os.getenv("AIRTABLE_BASE_ID")
 
 def main():
 
-    print(airtable_api_key)
-    print(airtable_base_id)
-
+    
     at = airtable.Airtable(airtable_base_id, airtable_api_key)
 
     st.title('Query Extraction App')
