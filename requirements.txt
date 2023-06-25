@@ -1,5 +1,5 @@
 streamlit
-airtable-python-wrapper
+pyairtable
 pandas
 numpy
 python-dotenv
