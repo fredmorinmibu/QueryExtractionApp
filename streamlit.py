@@ -7,11 +7,14 @@ import os
 from dotenv import load_dotenv
 from st_aggrid import AgGrid
 
-load_dotenv()
 
-airtable_api_key = os.getenv("AIRTABLE_API_KEY")
-airtable_base_id = os.getenv("AIRTABLE_BASE_ID")
-
+if 'STREAMLIT_SHARING' in os.environ:
+    airtable_api_key = st.secrets["AIRTABLE_API_KEY"]
+    airtable_base_id = st.secrets["AIRTABLE_BASE_ID"]
+else:
+    load_dotenv()
+    airtable_api_key = os.getenv("AIRTABLE_API_KEY")
+    airtable_base_id = os.getenv("AIRTABLE_BASE_ID")    
 def main():
 
     
