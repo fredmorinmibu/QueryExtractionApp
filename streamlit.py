@@ -9,6 +9,30 @@ from dotenv import load_dotenv
 from st_aggrid import AgGrid
 
 st.set_page_config(layout='wide')
+# Setup session state
+if "question" not in st.session_state:
+    st.session_state.question = ""
+if "quantity_required" not in st.session_state:
+    st.session_state.quantity_required = 1
+if "ai_equivalent" not in st.session_state:
+    st.session_state.ai_equivalent = ""
+if "resulting_query" not in st.session_state:
+    st.session_state.resulting_query = ""
+
+search_term = st.sidebar.text_input("Rechercher", value="", max_chars=20, key="search_term")
+
+st.sidebar.markdown("""
+    ## Instructions
+
+    Cette application est destinée à être utilisée conjointement avec AIHelperBot. Les données que nous construisons ici seront utilisées pour créer des requêtes textuelles similaires afin d'éliminer les redondances et de réduire les coûts liés à l'IA.
+    
+    1. Utilisez la boîte de recherche dans la barre latérale pour filtrer les données. Vous pouvez rechercher des termes présents dans n'importe quelle colonne du tableau.
+    
+    2. Pour ajouter un nouvel enregistrement à la base de données, remplissez les champs sous le titre "Entrez, dans vos propres mots, ce que vous voulez demander à la base de données" et cliquez sur "Soumettre". Le nouvel enregistrement apparaîtra dans le tableau ci-dessous.
+    
+    3. Vous pouvez trier les données en cliquant sur l'en-tête d'une colonne. Un second clic inversera l'ordre de tri.
+
+    """)
 
 def main():
     load_dotenv()
@@ -21,27 +45,17 @@ def main():
         airtable_base_id = os.getenv("AIRTABLE_BASE_ID")
         airtable_table_name = os.getenv("AIRTABLE_TABLE_NAME")    
     
-    # print (airtable_api_key)
-    # print (airtable_base_id)
-    # print (airtable_table_name)
-
-    # airtable_api_key = "patHs2G0VbeTXOxvW.4be741a1854bb51641a04a0990f95404b08dafa06441eb5211e35eb59e13fff3"
-    # airtable_base_id = "app4IZo9AHBqykAEr"
-    # airtable_table_name = "tblMHZA4IP4Ay4AM7"
-
-    #at = airtable.Airtable(airtable_base_id, airtable_table_name, airtable_api_key)
     at = Table(airtable_api_key, airtable_base_id,  airtable_table_name)
-    st.title('Query Extraction App')
-
-    st.write("Enter, in your own words, what you want to ask the database")
+    st.title('Application d\'extraction de requêtes')
+    st.write("Entrez, dans vos propres mots, ce que vous voulez demander à la base de données")
 
     # Add inputs
     with st.form(key='insert_record'):
-        question = st.text_input('Question:')
-        quantity_required = st.text_input('Quantity Required:')
-        ai_equivalent = st.text_input('AI Equivalent:')
-        resulting_query = st.text_input('Resulting Query:')
-        submit = st.form_submit_button('Submit')
+        question = st.text_input('Question:', key='question', value=st.session_state.question)
+        quantity_required = st.number_input('Quantité Requise:', key='quantity_required',value=st.session_state.quantity_required  )
+        ai_equivalent = st.text_input('Equivalent IA:', key='ai_equivalent', value=st.session_state.ai_equivalent)
+        resulting_query = st.text_area('Requête Résultante:', key='resulting_query', value=st.session_state.resulting_query )
+        submit = st.form_submit_button('Soumettre')
 
         if submit:
             fields = {
@@ -51,14 +65,33 @@ def main():
                 "Resulting Query": resulting_query
             }
             at.create(fields)
+           
+            # Reset session_state
+
+            
 
     table = at.all()
     df = pd.DataFrame([record.get('fields') for record in table])
+    if search_term:
+        df_filtered = df[df.apply(lambda row: search_term.lower() in ' '.join(row.astype(str)).lower(), axis=1)]
+
+    else:
+        df_filtered = df
+
+    rename_dict = {
+    'Question': 'Question',
+    'Quantity Required': 'Quantité Requise',
+    'AI Equivalent': 'Équivalent IA',
+    'Resulting Query': 'Requête Résultante'
+}
+
+# Rename columns.
+    df.rename(columns=rename_dict, inplace=True)
 
     # Use Ag-Grid to display the data in a table that allows sorting, filtering and paging
     #AgGrid(df)
     AgGrid(
-        df,
+        df_filtered,
         editable=True,
         sortable=True,
         filter=True,
@@ -67,43 +100,12 @@ def main():
         fit_columns_on_grid_load=True
     )
 
-    delete_index = st.number_input('Index to Delete', value=-1)
-    if delete_index >= 0 and delete_index < len(df):
-        st.write('You are about to delete the following record:')
-        st.table(df.loc[delete_index])
-        if st.button('Confirm Delete'):
-            # Delete the row from the DataFrame
-            df = df.drop(delete_index)
-
-            # Delete the row from the Airtable
-            record_id = table[delete_index]['id']
-            at.delete(record_id)
-
-
-    edit_index = st.number_input('Index to Edit', value=-1)
-    if edit_index >= 0 and edit_index < len(df):
-        # Get new values from the user
-        question = st.text_input('New Question:')
-        quantity_required = st.text_input('New Quantity Required:')
-        ai_equivalent = st.text_input('New AI Equivalent:')
-        resulting_query = st.text_input('New Resulting Query:')
-
-        if st.button('Submit Edits'):
-            # Update the DataFrame
-            df.loc[edit_index, 'Question'] = question
-            df.loc[edit_index, 'Quantity Required'] = int(quantity_required)
-            df.loc[edit_index, 'AI Equivalent'] = ai_equivalent
-            df.loc[edit_index, 'Resulting Query'] = resulting_query
-
-            # Update the Airtable
-            record_id = table[edit_index]['id']
-            fields = {
-                "Question": question,
-                "Quantity Required": int(quantity_required),
-                "AI Equivalent": ai_equivalent,
-                "Resulting Query": resulting_query
-            }
-            at.update(record_id, fields)
+def resetState():
+    st.session_state.question = ""
+    st.session_state.quantity_required = 1
+    st.session_state.ai_equivalent = ""
+    st.session_state.resulting_query = ""
+   
 
 if __name__ == "__main__":
     main()
